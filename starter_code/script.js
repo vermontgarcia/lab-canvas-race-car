@@ -1,21 +1,54 @@
 var canvas = document.getElementById('canvas');
 var ctx = canvas.getContext('2d');
+var interval;
+var positions = [canvas.width * 16 / 100,canvas.width * 32 / 100,canvas.width * 53 / 100,canvas.width * 69 / 100];
+var velocities = [20];
+var carImages = ['./images/red-car.png', './images/car.png']
 
 class Car{
    
   constructor(){
-    this.x = 175;
-    this.y = canvas.height - 80 - 20;
-    this.width = 50;
-    this.height = 80;
+    this.x = 165;
+    this.y = canvas.height - 110 - 20;
+    this.width = 70;
+    this.height = 110;
     this.image = new Image();
-    this.image.src = './images/car.png';
-  }   
+    this.image.src = './images/green-f1-car.png';
+  }
+  
+  collition(item){
+    return (this.x < item.x + item.width) &&
+        (this.x + this.width > item.x) &&
+        (this.y < item.y + item.height) &&
+        (this.y + this.height > item.y);
+}
   
   draw(){
     //if(this.y < 370) this.y += 5;
-    //if(frames % 10 === 0 ) this.image = this.image === this.image1 ? this.image2 : this.image1;
     ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
+  }
+}
+
+class ObsacleCar{
+  constructor(position, velocity, carImage){
+      this.x = position;
+      this.y = -120;
+      this.image = new Image();
+      this.image.src = carImage;
+      this.obstacleVelocity = velocity;
+      this.width = 60;
+      this.height = 100;
+  }
+
+  draw(){
+      //if(this.y < 370) this.y += 5;
+      //if(frames % 10 === 0 ) this.image = this.image === this.image1 ? this.image2 : this.image1;
+      if(frames % 10 === 0 ){
+        
+        this.y += this.obstacleVelocity
+
+      } 
+      ctx.drawImage(this.image, this.x, this.y, this.width, this.height);
   }
 }
 
@@ -34,6 +67,15 @@ class Scenario{
     this.roadX = canvas.width * 8 / 100 ;
     this.roadWidth = canvas.width * 84 / 100 ;
   }
+
+  gameOver(){
+    clearInterval(interval);
+    ctx.font = "40px Avenir";
+    // Dibujamos el texto en el canvas.
+    ctx.textAlign = 'center';
+    ctx.fillText("Game Over", canvas.width/2, 190);
+    //sonido.pause();
+}
   
   draw(){      
     ctx.fillStyle = 'green';
@@ -65,39 +107,39 @@ var velocity = 5;
 
 function startGame() {
 
-  var interval = setInterval(function(){
+  interval = setInterval(function(){
       
     frames++;
     ctx.clearRect(0,0,canvas.width, canvas.height);
     scenario.draw();
     car.draw();
-    //generateObstacles();
-    //drawObstacles();
+    generateCars();
+    drawObstacleCars();
   },1000/60);
 }
 
 addEventListener('keydown', function(e){
 
-
+  
   switch(e.keyCode){
-
+    
     case 37:
-      car.x -= 10;    
+    car.x -= 10;    
     break;
     case 39:
-      car.x += 10;
+    car.x += 10;
     break;
     case 38:
-      velocity --;
+    velocity --;
     break;
     case 40:
-      velocity ++;
+    velocity ++;
     break;
     default:
     break;
   }
   if(e.keyCode === 32){
-      mario.y -= 130;
+    mario.y -= 130;
        
   }
 });
@@ -107,4 +149,25 @@ window.onload = function() {
   document.getElementById("start-button").onclick = function() {
     startGame();
   }; 
+}
+
+
+var obstacleCars = [];
+
+function generateCars(){
+  if (frames % 350 === 0 || frames % 550 === 0 || frames % 700 === 0 || frames % 900 === 0){
+    let position = positions[Math.floor(Math.random() *positions.length)];
+    let velocity = velocities[Math.floor(Math.random()* velocities.length)];
+    let carImage = carImages[Math.floor(Math.random()*carImages.length)]
+
+    let obstacleCar = new ObsacleCar(position, velocity, carImage);
+    obstacleCars.push(obstacleCar);
+  }
+}
+
+function drawObstacleCars(){
+  obstacleCars.forEach(function(obstacleCar){
+    obstacleCar.draw();
+    if(car.collition(obstacleCar)) scenario.gameOver();
+  })
 }
